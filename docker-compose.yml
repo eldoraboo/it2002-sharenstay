@@ -7,10 +7,10 @@ services:
     environment:
       POSTGRES_PASSWORD: postgres
     ports:
-      - 5432:5432
+      - 5432
 
   adminer:
     image: adminer
     restart: always
     ports:
-      - 80:8080
+      - 7890:8080

@@ -20,9 +20,9 @@ CORS(app)
 
 # ? building our `engine` object from a custom configuration string
 # ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
-connection_string = f"postgresql://raawxzjg:YqZPEz-Z5ITHaJV--Tca--wwnnKBAwEw@trumpet.db.elephantsql.com/raawxzjg"
+connection_string = f"postgresql://raawxzjg:3mt6LAA_G5ONEsMp6C1gBsceXoGeoH6F@trumpet.db.elephantsql.com/raawxzjg"
 engine = sqlalchemy.create_engine(
-    "postgresql://raawxzjg:YqZPEz-Z5ITHaJV--Tca--wwnnKBAwEw@trumpet.db.elephantsql.com/raawxzjg"
+    "postgresql://raawxzjg:3mt6LAA_G5ONEsMp6C1gBsceXoGeoH6F@trumpet.db.elephantsql.com/raawxzjg"
 )
 
 # ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS

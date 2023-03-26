@@ -5,15 +5,17 @@ import json
 # ? flask - library used to write REST API endpoints (functions in simple words) to communicate with the client (view) application's interactions
 # ? request - is the default object used in the flask endpoints to get data from the requests
 # ? Response - is the default HTTP Response object, defining the format of the returned data by this api
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify, render_template, url_for, flash, redirect
 # ? sqlalchemy is the main library we'll use here to interact with PostgresQL DBMS
 import sqlalchemy
 # ? Just a class to help while coding by suggesting methods etc. Can be totally removed if wanted, no change
 from typing import Dict
-
+import requests
+from forms import RegistrationForm, LoginForm
 
 # ? web-based applications written in flask are simply called apps are initialized in this format from the Flask base class. You may see the contents of `__name__` by hovering on it while debugging if you're curious
 app = Flask(__name__)
+app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 
 # ? Just enabling the flask app to be able to communicate with any request source
 CORS(app)
@@ -21,9 +23,9 @@ CORS(app)
 # ? building our `engine` object from a custom configuration string
 # ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
 YOUR_POSTGRES_PASSWORD = "postgres"
-connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/first_database"
+connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/sharenstay"
 engine = sqlalchemy.create_engine(
-    "postgresql://postgres:postgres@localhost/first_database"
+    "postgresql://postgres:postgres@localhost/sharenstay"
 )
 
 # ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
@@ -38,6 +40,98 @@ data_types = {
 }
 
 # ? @app.get is called a decorator, from the Flask class, converting a simple python function to a REST API endpoint (function)
+
+@app.route("/", methods = ['GET','POST'])
+@app.route("/register", methods=['GET', 'POST'])
+def register():
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        # add user info to the user database
+        username = form.username.data
+        email = form.email.data
+        password = form.password.data
+
+        details = {"email": email,
+                   "username": username,
+                   "password": password
+                   }
+        
+        vtypes = {"email": "TEXT",
+                  "username": "TEXT",
+                  "password": "TEXT"
+                 }
+
+        try:
+            insertion = {"name": "users",
+                        "body": details,
+                        "valueTypes": vtypes
+                        }
+            statement1_email = generate_select_from_table_query(['users','email',insertion["body"]['email']])
+            tex1 = db.execute(statement1_email)
+            db.commit()
+            # Returns None if this is a new user
+            if tex1.fetchone() == None:
+                statement2_username = generate_select_from_table_query(['users','username',insertion["body"]['username']])
+                tex2 = db.execute(statement2_username)
+                db.commit()
+                if tex2.fetchone() == None:
+                    statement3 = generate_insert_table_statement(insertion)
+                    db.execute(statement3)
+                    db.commit()
+                    flash("You have successfully registered!", 'success')
+                    return redirect(url_for('login'))
+                else: 
+                    flash("Username is already taken! Try again.", 'danger')
+                    return redirect(url_for('register'))
+            else: 
+                flash("Email is already taken! Try again.", 'danger')
+                return redirect(url_for('register'))
+        except Exception as e:
+            db.rollback()
+            return Response(str(e), 403)
+    return render_template('register.html', title='Register', form=form)
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        given_email = form.email.data
+        given_password = form.password.data
+        statement1_email = generate_select_from_table_query(['users','email',given_email])
+        tex1 = db.execute(statement1_email)
+        db.commit()
+        user_deets = tex1.fetchone() # This will return None if no result and iterable iterm otherwise
+        if user_deets != None: # email exists in database
+            if user_deets[2] == given_password:
+                flash('You have been logged in!', 'success')
+                return redirect(url_for('home'))
+            else:
+              flash('Login Unsuccessful. Please check your password again', 'danger')
+              return redirect(url_for('login'))  
+        else:
+            flash('Login Unsuccessful. Please check your email again', 'danger')
+            return redirect(url_for('login'))
+    return render_template('login.html', title='Login', form=form)
+\
+
+@app.route("/home")
+def home():
+    statement = sqlalchemy.text(f"SELECT * FROM sharenstay LIMIT 50;")
+    res = db.execute(statement)
+    db.commit()
+    data = generate_table_return_result(res)
+    data = json.loads(data)
+    return render_template('home.html', data=data)
+
+@app.route("/users")
+def users():
+    statement = sqlalchemy.text(f"SELECT email, username FROM users;")
+    res = db.execute(statement)
+    db.commit()
+    data = generate_table_return_result(res)
+    data = json.loads(data)
+    return render_template('users.html', data=data)
 
 
 @app.get("/table")
@@ -238,6 +332,16 @@ def generate_create_table_statement(table: Dict):
     statement = statement[:-1] + ");"
     return sqlalchemy.text(statement)
 
+# Function to create simple SELECT * FROM _ WHERE _ = _
+def generate_select_from_table_query(ls):
+    # ls will be in the format:
+    #   [<table>, <col_to_select>, <value to check>]
+    table_name = ls[0]
+    table_col = ls[1]
+    value_checked = ls[2]
+    statement = f"SELECT * FROM {table_name} WHERE {table_col} = '{value_checked}' ;"
+    return sqlalchemy.text(statement)
+
 # ? This method can be used by waitress-serve CLI 
 def create_app():
    return app
@@ -247,9 +351,9 @@ PORT = 2222
 # ? Running the flask app on the localhost/0.0.0.0, port 2222
 # ? Note that you may change the port, then update it in the view application too to make it work (don't if you don't have another application occupying it)
 if __name__ == "__main__":
-    app.run("0.0.0.0", PORT)
+    # app.run("0.0.0.0", PORT)
     # ? Uncomment the below lines and comment the above lines below `if __name__ == "__main__":` in order to run on the production server
     # ? Note that you may have to install waitress running `pip install waitress`
     # ? If you are willing to use waitress-serve command, please add `/home/sadm/.local/bin` to your ~/.bashrc
-    # from waitress import serve
-    # serve(app, host="0.0.0.0", port=PORT)
+    from waitress import serve
+    serve(app, host="0.0.0.0", port=2222)

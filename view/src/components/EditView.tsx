@@ -100,7 +100,7 @@ const EditView = (props: EditViewProps) => {
                         }
                     </div>
                     <div className="create-relation-button">
-                        <button onClick={hanldeRelationCreation}>Create Relation</button>
+                        <button onClick={handleRelationCreation}>Create Relation</button>
                     </div>
                 </div>
             }
@@ -218,7 +218,7 @@ const EditView = (props: EditViewProps) => {
         setUpdateValues(_updateValues)
     }
 
-    async function hanldeRelationCreation() {
+    async function handleRelationCreation() {
         let body: { [name: string]: string } = {}
 
         fieldRows.forEach(fieldRow => {

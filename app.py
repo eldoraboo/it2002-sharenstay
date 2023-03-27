@@ -22,12 +22,11 @@ CORS(app)
 
 # ? building our `engine` object from a custom configuration string
 # ? for this project, we'll use the default postgres user, on a database called `postgres` deployed on the same machine
-YOUR_POSTGRES_PASSWORD = "postgres"
-connection_string = f"postgresql://postgres:{YOUR_POSTGRES_PASSWORD}@localhost/sharenstay"
+YOUR_POSTGRES_PASSWORD = "w8_EeV-WICYnWHFoozeiOjKesw39x_up"
+connection_string = f"postgresql://raawxzjg:w8_EeV-WICYnWHFoozeiOjKesw39x_up@trumpet.db.elephantsql.com/raawxzjg"
 engine = sqlalchemy.create_engine(
-    "postgresql://postgres:postgres@localhost/sharenstay"
+    "postgresql://raawxzjg:w8_EeV-WICYnWHFoozeiOjKesw39x_up@trumpet.db.elephantsql.com/raawxzjg"
 )
-
 # ? `db` - the database (connection) object will be used for executing queries on the connected database named `postgres` in our deployed Postgres DBMS
 db = engine.connect()
 
@@ -126,7 +125,7 @@ def home():
 
 @app.route("/users")
 def users():
-    statement = sqlalchemy.text(f"SELECT email, username FROM users;")
+    statement = sqlalchemy.text(f"SELECT email, username, password FROM users;")
     res = db.execute(statement)
     db.commit()
     data = generate_table_return_result(res)
@@ -351,9 +350,9 @@ PORT = 2222
 # ? Running the flask app on the localhost/0.0.0.0, port 2222
 # ? Note that you may change the port, then update it in the view application too to make it work (don't if you don't have another application occupying it)
 if __name__ == "__main__":
-    # app.run("0.0.0.0", PORT)
+    app.run("0.0.0.0", PORT)
     # ? Uncomment the below lines and comment the above lines below `if __name__ == "__main__":` in order to run on the production server
     # ? Note that you may have to install waitress running `pip install waitress`
     # ? If you are willing to use waitress-serve command, please add `/home/sadm/.local/bin` to your ~/.bashrc
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=2222)
+    # from waitress import serve
+    # serve(app, host="0.0.0.0", port=2222)

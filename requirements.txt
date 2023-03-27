@@ -4,3 +4,4 @@ flask_cors
 SQLAlchemy
 sqlalchemy_utils
 email_validator
+requests

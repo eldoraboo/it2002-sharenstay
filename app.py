@@ -123,6 +123,15 @@ def home():
     data = json.loads(data)
     return render_template('home.html', data=data)
 
+@app.route("/listings")
+def listings():
+    statement = sqlalchemy.text(f"SELECT * FROM sharenstay LIMIT 50;")
+    res = db.execute(statement)
+    db.commit()
+    data = generate_table_return_result(res)
+    data = json.loads(data)
+    return render_template('listings.html', data=data)
+
 @app.route("/users")
 def users():
     statement = sqlalchemy.text(f"SELECT email, username, password FROM users;")

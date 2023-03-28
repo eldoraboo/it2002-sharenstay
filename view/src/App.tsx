@@ -2,6 +2,7 @@ import './App.scss'
 import TableView from './components/TableView'
 import EditView from './components/EditView'
 import { useState } from 'react'
+import ShareNStay from './components/ShareNStay'
 
 // ? This interface/object template/class - defines the JSON structure of the displayed table/relation for this application
 export interface RelationView {
@@ -30,6 +31,7 @@ function App() {
         <EditView relationView={currentRelationView} onRelationChange={handleRelationViewUpdate} />
         {/* TableView component is just for displaying the table on the right side of the view */}
         <TableView relationView={currentRelationView} />
+        <ShareNStay />
       </div>
     </div>
   )

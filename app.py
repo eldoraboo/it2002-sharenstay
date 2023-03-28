@@ -116,12 +116,32 @@ def login():
 
 @app.route("/home")
 def home():
-    statement = sqlalchemy.text(f"SELECT * FROM sharenstay LIMIT 50;")
+    # get filter values from query parameters
+    neighbourhood_group = request.args.get('neighbourhood_group', None)
+    room_type = request.args.get('room_type', None)
+
+    # generate SQL statement with filters
+    filters = []
+    if neighbourhood_group:
+        filters.append(f"neighbourhood_group = '{neighbourhood_group}'")
+    if room_type:
+        filters.append(f"room_type = '{room_type}'")
+    where_clause = "WHERE " + " AND ".join(filters) if filters else ""
+    statement = sqlalchemy.text(f"SELECT * FROM sharenstay {where_clause} LIMIT 50;")
+    
+    # execute SQL statement and generate data for template
     res = db.execute(statement)
     db.commit()
     data = generate_table_return_result(res)
     data = json.loads(data)
-    return render_template('home.html', data=data)
+
+    # get unique values for each filter
+    neighbourhood_groups = distinct_value_from_column('neighbourhood_group')
+    room_types = distinct_value_from_column('room_type')
+
+    return render_template('home.html', data=data, 
+    neighbourhood_groups=neighbourhood_groups,
+    room_types=room_types)
 
 @app.route("/listings")
 def listings():
@@ -236,7 +256,13 @@ def delete_row():
         db.rollback()
         return Response(str(e), 403)
 
-
+def distinct_value_from_column(col):
+    statement = sqlalchemy.text(f"SELECT DISTINCT {col} FROM sharenstay;")
+    res = db.execute(statement)
+    results = [r[0] for r in res.fetchall()]  # fetch all rows and convert to a list
+    db.commit()
+    return results
+    
 def generate_table_return_result(res):
     # ? An empty Python list to store the entries/rows/tuples of the relation/table
     rows = []
